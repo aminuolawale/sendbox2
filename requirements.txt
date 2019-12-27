@@ -1,0 +1,7 @@
+dnspython==1.16.0
+falcon==2.0.0
+gunicorn==20.0.4
+mongoengine==0.19.0
+pkg-resources==0.0.0
+pymongo==3.10.0
+six==1.13.0

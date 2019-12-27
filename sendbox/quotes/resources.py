@@ -1,6 +1,9 @@
 from .model import Quote
+from .utils import is_duplicate
+from bson.objectid import ObjectId
 import falcon
 import json
+
 
 class CRUDQuote(object):
     def on_get(self, req, resp):
@@ -14,7 +17,7 @@ class CRUDQuote(object):
             return
         quote_data = req.media
         if is_duplicate(quote_data, user):
-            resp.body = json.dumps({'status':False,'message':'cannot set duplicate quotes'})
+            resp.body = json.dumps({'status':False,'message':'you have already set a quote on the given locations'})
             resp.status = falcon.HTTP_400
             return
         quote_data['courier_id'] = req.context['user']['id']
@@ -28,10 +31,13 @@ class CRUDQuote(object):
         except:
             resp.body = json.dumps({'status':False,'message':'invalid quote_id'})
             resp.status = falcon.HTTP_400
+            return
         user = req.context['user']
-        if quote['courier_id'] != user['id']:
-            resp.body = json.dumps({'status':False,'message':'invalid quote_id'})
+        user_id = ObjectId(user['id'])
+        if quote['courier_id'] != user_id:
+            resp.body = json.dumps({'status':False,'message':'you cannot perform this action'})
             resp.status = falcon.HTTP_403
+            return
         quote_data = req.media
         for key in quote_data:
             quote[key] = quote_data[key]
@@ -44,13 +50,31 @@ class CRUDQuote(object):
         except:
             resp.body = json.dumps({'status':False,'message':'invalid quote_id'})
             resp.status = falcon.HTTP_400
+            return
         user = req.context['user']
-        quote_data = req.media
-        for key in quote_data:
-            quote[key] = quote_data[key]
-        quote.save()
-        resp.body = json.dumps({'status':True,'message':'sucessfully created quote','data':quote.format()})
+        user_id = ObjectId(user['id'])
+        if quote['courier_id'] != user_id:
+            resp.body = json.dumps({'status':False,'message':'you cannot perform this action'})
+            resp.status = falcon.HTTP_403
+            return
+        quote.delete()
+        resp.body = json.dumps({'status':True,'message':'sucessfully deleted quote'})
         resp.status = falcon.HTTP_200
+
+class GetQuote(object):
+    def on_get(self, req, resp):
+        origin = req.media['origin']
+        destination = req.media['destination']
+        weight = req.media['weight']
+        try:
+            quotes = [{'quote':quote.format(),'total_price':quote['price_per_kg']*weight} for quote in Quote.objects.filter(origin=origin, destination=destination)]
+        except:
+            resp.body = json.dumps({'status':True,'message':'no quotes found for given origin and destination','data':[]})
+            resp.status = falcon.HTTP_200
+            return
+        resp.body = json.dumps({'status':True,'message':'success','data':quotes})
+        resp.status = falcon.HTTP_200
+        
 
 
 

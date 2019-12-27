@@ -1,10 +1,13 @@
 import jwt
 import falcon
+from ..users.model import User
 
 class AuthMiddleware(object):
     
     def process_request(self, req, resp):
         exempts={
+        '/': ['GET'],
+        '/home': ['GET'],
         '/users':['GET', 'POST'],
         '/login': ['POST'],
         '/quotes': ['GET']
@@ -20,10 +23,11 @@ class AuthMiddleware(object):
             raise falcon.HTTPUnauthorized(description=description)
         try:
             user = jwt.decode(token, 'secret')
+            user = User.objects.get(id=user['id'])
         except:
             description ={
                 'status': False,
                 'message': 'Invalid token'
             }
             raise falcon.HTTPUnauthorized(description=description)
-        req.context['user'] = user
+        req.context['user'] = user.format()

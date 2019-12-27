@@ -18,4 +18,6 @@ class User(Document):
         user['is_admin'] = self.is_admin
         user['is_courier'] = self.is_courier
         return user
+    def reload(self):
+        self = User.objects.get(id=self.id)
 

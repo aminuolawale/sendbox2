@@ -3,6 +3,8 @@ from .utils import unique_email, unique_username
 import falcon
 import json
 import bcrypt, jwt
+import datetime
+
 
 class CRUDUser(object):
     def on_get(self, req, resp, user_id=None):
@@ -62,7 +64,7 @@ class CRUDUser(object):
         resp.body = json.dumps({'status': True, 'message':'successfully deleted user'})
         resp.status = falcon.HTTP_200
 
-class LoginUser():
+class LoginUser(object):
     def on_post(self, req, resp):
         login = req.media
         username = login['username'] if 'username' in login else None
@@ -84,7 +86,10 @@ class LoginUser():
             resp.body = json.dumps({'status': False, 'message': 'invalid username/email or password'})
             resp.status = falcon.HTTP_404
             return
-        token  = jwt.encode(user.format(),'secret').decode('utf-8')
+        expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1800)
+        users_t = user.format()
+        users_t['exp'] = expiration_time
+        token  = jwt.encode(users_t,'secret').decode('utf-8')
         resp.body = json.dumps({'status': True, 'message': 'user logged in succesfully', 'data':{'token':token}})
         resp.status = falcon.HTTP_200
 
