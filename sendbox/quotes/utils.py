@@ -1,4 +1,5 @@
 from .model import Quote
+import falcon
 
 def is_duplicate(quote_data, user):
     origin = quote_data['origin']
@@ -9,3 +10,14 @@ def is_duplicate(quote_data, user):
         return True
     except:
         return False
+    
+def load_quote(quote_id):
+    try:
+        quote = Quote.objects.get(id=quote_id)
+        return quote
+    except:
+        description ={
+                'status': False,
+                'message': 'Invalid quote_id'
+            }
+        raise falcon.HTTPNotFound(description=description)

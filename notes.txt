@@ -1,0 +1,1 @@
+current_user as in flask_login or whatever is just a global variable. I should implement the same in my current project

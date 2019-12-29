@@ -1,14 +1,19 @@
 from .model import Quote
-from .utils import is_duplicate
+from .utils import is_duplicate, load_quote
 from bson.objectid import ObjectId
 import falcon
 import json
 
 
 class CRUDQuote(object):
-    def on_get(self, req, resp):
+    def on_get(self, req, resp, quote_id=None):
+        if quote_id:
+            quote = load_quote(quote_id)
+            resp.body = json.dumps({'status':True,'message':'succes', 'data':quote})
+            resp.status = falcon.HTTP_200
         quotes = [ quote.format() for quote in Quote.objects ]
         resp.body = json.dumps({'status':True,'message':'succes', 'data':quotes})
+        resp.status = falcon.HTTP_200
     def on_post(self, req, resp):
         user = req.context['user']
         if not user['is_courier']:

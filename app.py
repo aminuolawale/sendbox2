@@ -4,7 +4,7 @@ from sendbox.users.resources import CRUDUser, CourierUser, AdminUser, LoginUser
 from sendbox.quotes.resources import CRUDQuote, GetQuote
 from sendbox.middleware.auth import AuthMiddleware
 import falcon
-connect('bookdb', host="mongodb+srv://wawindaji:wawindaji@cluster0-e0miz.mongodb.net/test?retryWrites=true&w=majority", port=27017)
+connect('sendbox', host="mongodb://localhost/sendbox", port=27017)
 
 
 app = falcon.API(middleware=AuthMiddleware())

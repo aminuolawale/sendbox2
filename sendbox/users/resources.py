@@ -1,5 +1,5 @@
 from .model import User
-from .utils import unique_email, unique_username
+from .utils import unique_email, unique_username, load_user
 import falcon
 import json
 import bcrypt, jwt
@@ -9,12 +9,7 @@ import datetime
 class CRUDUser(object):
     def on_get(self, req, resp, user_id=None):
         if user_id:
-            try:
-                user = User.objects.get(id=user_id)
-            except:
-                resp.body = json.dumps({'status': False, 'message': 'invalid user_id'})
-                resp.status = falcon.HTTP_404
-                return
+            user = load_user(user_id)
             resp.body = json.dumps({'status': True, 'message': 'success', 'data':user.format()})
             resp.status = falcon.HTTP_200
         else:
@@ -41,12 +36,7 @@ class CRUDUser(object):
 
     def on_put(self, req, resp, user_id):
         user_data = req.media
-        try:
-            user = User.objects.get(id=user_id)
-        except:
-            resp.body = json.dumps({'status': False, 'message': 'invalid user_id'})
-            resp.status = falcon.HTTP_404
-            return
+        user = load_user(user_id)
         for key in user_data:
             user[key] = user_data[key]
         user.save()
@@ -54,12 +44,7 @@ class CRUDUser(object):
         resp.status = falcon.HTTP_200
     
     def on_delete(self, req, resp, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except:
-            resp.body = json.dumps({'status': False, 'message': 'invalid user_id'})
-            resp.status = falcon.HTTP_404
-            return
+        user = load_user(user_id)
         user.delete()
         resp.body = json.dumps({'status': True, 'message':'successfully deleted user'})
         resp.status = falcon.HTTP_200
@@ -95,12 +80,7 @@ class LoginUser(object):
 
 class AdminUser(object):
     def on_put(self,req,resp, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except:
-            resp.body = json.dumps({'status': False, 'message': 'invalid user_id'})
-            resp.status = falcon.HTTP_404
-            return
+        user = load_user(user_id)
         user['is_admin'] = True
         user.save()
         user = User.objects.get(id=user_id)
@@ -109,12 +89,7 @@ class AdminUser(object):
 
 class CourierUser(object):
     def on_put(self,req,resp, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except:
-            resp.body = json.dumps({'status': False, 'message': 'invalid user_id'})
-            resp.status = falcon.HTTP_404
-            return
+        user = load_user(user_id)
         user['is_courier'] = True
         user.save()
         user = User.objects.get(id=user_id)
