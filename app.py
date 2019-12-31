@@ -1,11 +1,12 @@
 from mongoengine import connect
 from sendbox.main.resources import HomeResource
-from sendbox.users.resources import CRUDUser, CourierUser, AdminUser, LoginUser
+from sendbox.users.resources import CRUDUser, MakeAdmin, MakeCourier, LoginUser
 from sendbox.quotes.resources import CRUDQuote, GetQuote
+from sendbox.shipments.resources import CRUDShipment, PayForShipment, AcceptShipment, VerifyShipment
 from sendbox.middleware.auth import AuthMiddleware
 import falcon
 connect('sendbox', host="mongodb://localhost/sendbox", port=27017)
-
+print('connected to database successfully')
 
 app = falcon.API(middleware=AuthMiddleware())
 
@@ -19,3 +20,8 @@ app.add_route('/user/admin/{user_id}', AdminUser())
 app.add_route('/quotes',CRUDQuote())
 app.add_route('/quote/{quote_id}',CRUDQuote())
 app.add_route('/quote',GetQuote())
+app.add_route('/shipments', CRUDShipment())
+app.add_route('/shipments/{shipment_id}', CRUDShipment())
+app.add_route('/shipment/accept/{shipment_id}', AcceptShipment())
+app.add_route('/shipment/pay/{shipment_id}', PayForShipment())
+app.add_route('/shipment/verify/{shipment_id}',VerifyShipment())

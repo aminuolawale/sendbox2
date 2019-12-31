@@ -2,8 +2,8 @@ import jwt
 import falcon
 from ..users.model import User
 
+
 class AuthMiddleware(object):
-    
     def process_request(self, req, resp):
         exempts={
         '/': ['GET'],
@@ -31,3 +31,4 @@ class AuthMiddleware(object):
             }
             raise falcon.HTTPUnauthorized(description=description)
         req.context['user'] = user.format()
+

@@ -1,5 +1,5 @@
 from .model import User
-from .utils import unique_email, unique_username, load_user
+from .utils import validate_input, load_user
 import falcon
 import json
 import bcrypt, jwt
@@ -19,14 +19,7 @@ class CRUDUser(object):
 
     def on_post(self, req, resp):
         user_data = req.media
-        if not unique_username(user_data):
-            resp.body = json.dumps({'satus':False,'message':'username unavailable. Please choose another'})
-            resp.status = falcon.HTTP_400
-            return
-        if not unique_email(user_data):
-            resp.body = json.dumps({'satus':False,'message':'email already registered. Please proceed to login or provide another email'})
-            resp.status = falcon.HTTP_400
-            return
+        validate_input(user_data)
         password = str.encode(user_data['password'])
         user_data['password'] = bcrypt.hashpw(password,bcrypt.gensalt()).decode('utf-8')
         user = User.objects.create(**user_data)
@@ -71,28 +64,26 @@ class LoginUser(object):
             resp.body = json.dumps({'status': False, 'message': 'invalid username/email or password'})
             resp.status = falcon.HTTP_404
             return
-        expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=1800)
+        expiration_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=3600)
         users_t = user.format()
         users_t['exp'] = expiration_time
         token  = jwt.encode(users_t,'secret').decode('utf-8')
         resp.body = json.dumps({'status': True, 'message': 'user logged in succesfully', 'data':{'token':token}})
         resp.status = falcon.HTTP_200
 
-class AdminUser(object):
+class MakeAdmin(object):
     def on_put(self,req,resp, user_id):
         user = load_user(user_id)
         user['is_admin'] = True
         user.save()
-        user = User.objects.get(id=user_id)
         resp.body = json.dumps({'status': True, 'message': 'user successfully made admin', 'data':user.format()})
         resp.status = falcon.HTTP_200
 
-class CourierUser(object):
+class MakeCourier(object):
     def on_put(self,req,resp, user_id):
         user = load_user(user_id)
         user['is_courier'] = True
         user.save()
-        user = User.objects.get(id=user_id)
         resp.body = json.dumps({'status': True, 'message': 'user successfully made courier', 'data':user.format()})
         resp.status = falcon.HTTP_200
 

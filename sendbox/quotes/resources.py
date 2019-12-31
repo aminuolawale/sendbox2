@@ -1,5 +1,5 @@
 from .model import Quote
-from .utils import is_duplicate, load_quote
+from .utils import is_duplicate, load_quote, validate_input
 from bson.objectid import ObjectId
 import falcon
 import json
@@ -21,6 +21,7 @@ class CRUDQuote(object):
             resp.status = falcon.HTTP_401
             return
         quote_data = req.media
+        validate_input(quote_data,user)
         if is_duplicate(quote_data, user):
             resp.body = json.dumps({'status':False,'message':'you have already set a quote on the given locations'})
             resp.status = falcon.HTTP_400
@@ -31,12 +32,7 @@ class CRUDQuote(object):
         resp.body = json.dumps({'status':True,'message':'sucessfully created quote','data':quote.format()})
         resp.status = falcon.HTTP_201
     def on_put(self, req, resp, quote_id):
-        try:
-            quote = Quote.objects.get(id=quote_id)
-        except:
-            resp.body = json.dumps({'status':False,'message':'invalid quote_id'})
-            resp.status = falcon.HTTP_400
-            return
+        quote = load_quote(quote_id)
         user = req.context['user']
         user_id = ObjectId(user['id'])
         if quote['courier_id'] != user_id:
@@ -50,12 +46,7 @@ class CRUDQuote(object):
         resp.body = json.dumps({'status':True,'message':'sucessfully created quote','data':quote.format()})
         resp.status = falcon.HTTP_200
     def on_delete(self,req, resp, quote_id):
-        try:
-            quote = Quote.objects.get(id=quote_id)
-        except:
-            resp.body = json.dumps({'status':False,'message':'invalid quote_id'})
-            resp.status = falcon.HTTP_400
-            return
+        quote = load_quote(quote_id)
         user = req.context['user']
         user_id = ObjectId(user['id'])
         if quote['courier_id'] != user_id:
