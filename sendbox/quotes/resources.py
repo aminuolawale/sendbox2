@@ -21,7 +21,7 @@ class CRUDQuote(object):
             resp.status = falcon.HTTP_401
             return
         quote_data = req.media
-        validate_input(quote_data,user)
+        validate_input(quote_data)
         if is_duplicate(quote_data, user):
             resp.body = json.dumps({'status':False,'message':'you have already set a quote on the given locations'})
             resp.status = falcon.HTTP_400

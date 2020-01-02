@@ -16,7 +16,7 @@ class Shipment(Document):
     payment_ref  = StringField(default=None)
     created_at   = DateTimeField(default=datetime.utcnow())
 
-    def update_price(self):
+    def set_cost(self):
         quote = Quote.objects.get(id=self.quote_id)
         self.total_price = quote['price_per_kg'] *self.weight
         self.save()

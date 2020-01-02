@@ -2,6 +2,7 @@ from .model import User
 from verify_email import verify_email
 import falcon
 def valid_username(data):
+    username = data['username']
     return True if len(username) >=3 else False
 def unique_username(data):
     username = data['username']

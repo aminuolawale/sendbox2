@@ -1,5 +1,5 @@
 from .model import Shipment
-from .utils import load_shipment, load_client, verify_courier
+from .utils import load_shipment, load_client, verify_courier, disallow_self_booking, payment_ready, verification_ready, completion_ready
 import falcon
 import json
 import requests
@@ -7,9 +7,11 @@ import requests
 class CRUDShipment(object):
     def on_post(self, req, resp):
         shipment_data = req.media
-        shipment_data['client_id'] = req.context['user']['id']
+        client_id = req.context['user']['id']
+        disallow_self_booking(shipment_data, client_id)
+        shipment_data['client_id'] = client_id
         shipment = Shipment.objects.create(**shipment_data)
-        shipment.update_price()
+        shipment.set_cost()
         shipment.save()
         resp.body = json.dumps({'status':True,'message':'shipment created successfully', 'data':shipment.format()}) 
         resp.status = falcon.HTTP_201
@@ -49,10 +51,7 @@ class AcceptShipment(object):
 class PayForShipment(object):
     def on_put(self, req, resp, shipment_id):
         shipment = load_shipment(shipment_id)
-        if not shipment['is_accepted']:
-            resp.body = json.dumps({'status':False, 'message':'Courier must accept booking before shipment is paid'})
-            resp.status = falcon.HTTP_400
-            return
+        payment_ready(shipment)
         user_id = req.context['user']['id']
         client = load_client(shipment,user_id)
         amount = shipment['total_price']
@@ -65,6 +64,8 @@ class PayForShipment(object):
         authorization_url = data['authorization_url']
         access_code = data['access_code']
         reference = data['reference']
+        shipment['payment_ref'] = reference
+        shipment.save()
         payment_prompt = {'authorization_url':authorization_url,'access_code':access_code,'reference':reference}
         resp.body = json.dumps({'status':True,
                     'message':'payment initialized. client should follow authorization url to complete payment',
@@ -74,12 +75,12 @@ class PayForShipment(object):
 class VerifyShipment(object):
     def on_put(self, req, resp, shipment_id):
         shipment = load_shipment(shipment_id)
+        verification_ready(shipment)
         user_id = req.context['user']['id']
         client = load_client(shipment, user_id)
         url = 'https://api.paystack.co/transaction/verify/{}'.format(shipment['payment_ref'])
         API_KEY = 'Bearer sk_test_4929b051d09cf8291b9820f445198737f44503bd'
         response = requests.get(url,headers={'Authorization':API_KEY})
-        print(response.json())
         data = response.json()['data']
         status = data['status']
         if not status:
@@ -90,6 +91,21 @@ class VerifyShipment(object):
         shipment.save()
         resp.body = json.dumps({'status':True, 'message':'payment successful'})
         resp.status = falcon.HTTP_200
+
+class CompleteShipment(object):
+    def on_put(self, req, resp, shipment_id):
+        shipment = load_shipment(shipment_id)
+        completion_ready(shipment)
+        user_id = req.context['user']['id']
+        client = load_client(shipment, user_id)
+        print(client)
+        shipment['is_completed'] = True
+        shipment.save()
+        resp.body = json.dumps({'status':True, 'message':'Shipment completed successfully', 'data':shipment.format()})
+        resp.status = falcon.HTTP_200
+
+
+
         
  
 
