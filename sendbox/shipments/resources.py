@@ -98,7 +98,6 @@ class CompleteShipment(object):
         completion_ready(shipment)
         user_id = req.context['user']['id']
         client = load_client(shipment, user_id)
-        print(client)
         shipment['is_completed'] = True
         shipment.save()
         resp.body = json.dumps({'status':True, 'message':'Shipment completed successfully', 'data':shipment.format()})
